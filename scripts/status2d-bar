@@ -1,0 +1,81 @@
+#!/bin/dash
+
+# ^c$var^ = fg color
+# ^b$var^ = bg color
+
+INTERVAL=0
+TRACK_WIFI=0
+
+# load colors
+. ~/.config/dwm/scripts/themes/nord
+
+pkg_updates() {
+  #updates=$({ timeout 20 doas xbps-install -un 2>/dev/null || true; } | wc -l) # void
+  #updates=$({ timeout 20 aptitude search '~U' 2>/dev/null || true; } | wc -l)  # apt (ubuntu, debian etc)
+  UPDATES=$({ timeout 20 checkupdates 2>/dev/null || true; } | wc -l) # arch
+
+  if [ ! -z "$UPDATES" ]; then
+    printf "^c$green^   $UPDATES"
+  fi
+}
+
+battery() {
+  local file="/sys/class/power_supply/BAT1/capacity"
+  
+  if [ -f "$file" ]; then
+    local get_capacity="$(cat "$file")"
+    printf "^c$white^   $get_capacity"
+  fi
+}
+
+brightness() {
+  local file="/sys/class/backlight/*/brightness"
+
+  if [ -f "$file" ]; then
+    printf "^c$red^   %.0f\n" $(cat "$file")
+  fi
+}
+
+cpu() {
+  # load avg
+  local cpu_val=$(grep -o "^[^ ]*" /proc/loadavg)
+
+  # percentage
+  # local cpu_usage_pct=$(top -bn1 | grep "Cpu(s)" | sed "s/.*, *\([0-9.]*\)%* id.*/\1/" | awk '{print 100 - $1}')
+  # local cpu_val="$cpu_usage_pct%%"
+
+  printf "^c$blue^ 🖩 $cpu_val"
+}
+
+mem() {
+  printf "^c$darkblue^   $(free -h | awk '/^Mem/ { print $3 }' | sed s/i//g)"
+}
+
+net() {
+    local wifi_file=/sys/class/net/wl*/operstate
+
+    if [ -f $wifi_file && $TRACK_WIFI -eq 1 ]; then
+      case "$(cat $wifi_file 2>/dev/null)" in
+        up) printf "^c$black^ ^b$blue^ 󰤨 ^d^%s" " ^c$blue^Connected" ;;
+        down) printf "^c$black^ ^b$blue^ 󰤭 ^d^%s" " ^c$blue^Disconnected" ;;
+      esac
+    else
+      local eth_adp=$(ip link show | grep -E 'enp|eth' | grep -v 'lo' | awk '/state UP/ {print $2}' | tr -d ':')
+      if [ ! -n "$eth_adp" ]; then
+        printf "^c$red^🚫^c$blue^ no internet ^c$red^🚫^d^"
+      fi
+    fi
+}
+
+clock() {
+	printf "^c$white^ $(date '+%H:%M')"
+}
+
+while true; do
+
+  [ $INTERVAL = 0 ] || [ $(($INTERVAL % 3600)) = 0 ] && UPDATES=$(pkg_updates)
+  INTERVAL=$((INTERVAL + 1))
+
+  sleep 1 && xsetroot -name " $UPDATES $(battery) $(brightness) $(cpu) $(mem) $(net) $(clock) ^d^"
+done
+
