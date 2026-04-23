@@ -26,6 +26,7 @@ Available patches:
 - [statuspadding](https://dwm.suckless.org/patches/statuspadding/)
 - [swallow](https://dwm.suckless.org/patches/swallow/)
 - [systray](https://dwm.suckless.org/patches/systray/)
+- [tagicon](https://github.com/4eck-qed/dwm-tagicon)
 - [taglabels](https://dwm.suckless.org/patches/taglabels/)
 - [vanitygaps](https://dwm.suckless.org/patches/vanitygaps/)
 - [viewontag](https://dwm.suckless.org/patches/viewontag/)
